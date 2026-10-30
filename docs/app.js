@@ -153,6 +153,7 @@ function allOff() {
   for (const id of active.keys()) endNote(id);
   pointers.clear();
 }
+window.addEventListener('piano-layout-change', allOff);
 function shiftOctave(delta) {
   allOff();
   octave = Math.max(1, Math.min(6, octave + delta));

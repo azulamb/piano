@@ -15,3 +15,25 @@ html,body,dialog,button,a,input,select,summary{touch-action:manipulation}.keyboa
 
 /* Scale black keys with the selected white-key count. */
 .keyboard{--white-count:8;container-type:inline-size}.keyboard .key.black{width:calc(70% / var(--white-count));left:calc((var(--position) * 100% - 35%) / var(--white-count))}.keyboard .key span{font-size:clamp(8px,calc(100cqw / var(--white-count) * .28),26px)}.keyboard .key small{font-size:clamp(7px,calc(100cqw / var(--white-count) * .2),16px)}.keyboard-help{font-size:12px;line-height:1.7;color:#65736b;margin:0}
+
+/* Rotate the app and the top-layer dialog separately: modal dialogs do not
+   inherit a transformed ancestor's coordinate system. */
+.landscape-rotated body{overflow:hidden}
+.landscape-rotated .piano-app{
+  position:fixed;left:var(--view-width);top:0;
+  width:var(--view-height);height:var(--view-width);
+  transform-origin:top left;transform:rotate(90deg);
+  padding:max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(6px,env(safe-area-inset-left)) max(10px,env(safe-area-inset-top));
+  gap:4px;
+}
+.landscape-rotated .performance-info{display:none}
+.landscape-rotated .key.white{padding-bottom:15px}
+.landscape-rotated .key.black{padding-bottom:12px}
+.landscape-rotated #status{font-size:10px}
+.landscape-rotated dialog{
+  position:fixed;inset:auto;left:50%;top:50%;margin:0;
+  width:min(540px,calc(var(--view-height) - 28px - env(safe-area-inset-top) - env(safe-area-inset-bottom)));
+  max-width:none;
+  max-height:calc(var(--view-width) - 28px - env(safe-area-inset-left) - env(safe-area-inset-right));
+  transform:translate(-50%,-50%) rotate(90deg);
+}

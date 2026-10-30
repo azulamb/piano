@@ -1,4 +1,4 @@
-const CACHE = 'pocket-chip-v8';
+const CACHE = 'pocket-chip-v9';
 const ASSETS = ['./', './index.html', './style.css', './app.js', './audio.js', './orientation.js', './manifest.webmanifest', './icon.svg', './icons/icon-192.png', './icons/icon-512.png'];
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)));
