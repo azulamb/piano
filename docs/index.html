@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#203d37">
+  <meta name="description" content="ファミコン風の音で演奏できる、小さなポケットピアノ。録音・WAV保存・オフライン対応。">
+  <link rel="manifest" href="./manifest.webmanifest">
+  <link rel="icon" href="./icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="stylesheet" href="./style.css">
+  <title>ポケット・チップ — 8-bit piano</title>
+  <script src="./audio.js" defer></script>
+  <script src="./app.js" defer></script>
+</head>
+<body>
+<main class="piano-app">
+  <header class="toolbar"><span class="brand">POCKET CHIP</span>        <div><span class="control-label">オクターブ</span><div class="octave"><button id="octave-down" aria-label="1オクターブ下げる（Z / ↓）" aria-keyshortcuts="Z ArrowDown" title="1オクターブ下げる（Z / ↓）">−</button><output id="octave">C4–C5</output><button id="octave-up" aria-label="1オクターブ上げる（X / ↑）" aria-keyshortcuts="X ArrowUp" title="1オクターブ上げる（X / ↑）">＋</button></div></div><button id="open-settings" aria-haspopup="dialog" aria-controls="settings">設定・録音</button><button id="quick-stop" hidden>■ 録音停止</button></header>
+  <div class="performance-info"><span id="note-display">READY TO PLAY</span><span id="tone-display">パルス 50%</span></div>
+  <div class="keyboard" id="keyboard" aria-label="ピアノ鍵盤"><button type="button" class="key white" data-offset="0" aria-label="ド、Aキー" aria-pressed="false"><span>ド</span><small>A</small></button>
+<button type="button" class="key black" data-offset="1" aria-label="ド♯、Wキー" aria-pressed="false" style="--position:1"><span>ド♯</span><small>W</small></button>
+<button type="button" class="key white" data-offset="2" aria-label="レ、Sキー" aria-pressed="false"><span>レ</span><small>S</small></button>
+<button type="button" class="key black" data-offset="3" aria-label="レ♯、Eキー" aria-pressed="false" style="--position:2"><span>レ♯</span><small>E</small></button>
+<button type="button" class="key white" data-offset="4" aria-label="ミ、Dキー" aria-pressed="false"><span>ミ</span><small>D</small></button>
+<button type="button" class="key white" data-offset="5" aria-label="ファ、Fキー" aria-pressed="false"><span>ファ</span><small>F</small></button>
+<button type="button" class="key black" data-offset="6" aria-label="ファ♯、Tキー" aria-pressed="false" style="--position:4"><span>ファ♯</span><small>T</small></button>
+<button type="button" class="key white" data-offset="7" aria-label="ソ、Gキー" aria-pressed="false"><span>ソ</span><small>G</small></button>
+<button type="button" class="key black" data-offset="8" aria-label="ソ♯、Yキー" aria-pressed="false" style="--position:5"><span>ソ♯</span><small>Y</small></button>
+<button type="button" class="key white" data-offset="9" aria-label="ラ、Hキー" aria-pressed="false"><span>ラ</span><small>H</small></button>
+<button type="button" class="key black" data-offset="10" aria-label="ラ♯、Uキー" aria-pressed="false" style="--position:6"><span>ラ♯</span><small>U</small></button>
+<button type="button" class="key white" data-offset="11" aria-label="シ、Jキー" aria-pressed="false"><span>シ</span><small>J</small></button>
+<button type="button" class="key white" data-offset="12" aria-label="ド、Kキー" aria-pressed="false"><span>ド</span><small>K</small></button></div>
+  <p id="status" role="status">鍵盤をタップして演奏 · Z / ↓で1オクターブ下、X / ↑で1オクターブ上</p>
+  <noscript>演奏にはJavaScriptを有効にしてください。</noscript>
+</main>
+<dialog id="settings" aria-labelledby="settings-title">
+  <div class="dialog-heading"><h1 id="settings-title">設定・録音</h1><button id="close-settings" autofocus>閉じる</button></div>
+      <div class="controls">
+        <label class="tone-label">音色 <select id="tone"><option value="pulse50">パルス 50% · まろやか</option><option value="pulse25">パルス 25% · ゲームの主役</option><option value="pulse12">パルス 12.5% · きらめき</option><option value="triangle">三角波 · やわらかい低音</option><option value="noise">ノイズ · リズムと効果音</option></select></label>
+
+        <label class="volume-label">音量 <span><input id="volume" type="range" min="0" max="100" value="65"><output id="volume-value">65%</output></span></label>
+      </div>
+
+    <section class="recorder" aria-label="録音">
+      <div class="record-info"><span class="eyebrow">YOUR LITTLE SESSION</span><div><span id="record-dot" aria-hidden="true">●</span> <output id="timer">00:00</output><span id="record-label">演奏を残そう</span></div></div>
+      <div class="record-actions"><button id="record" class="primary">● 録音する</button><button id="stop" disabled>■ 停止</button></div>
+      <div id="recording-result" hidden><audio id="playback" controls aria-label="録音した演奏"></audio><a id="download" class="download" download>↓ WAVを保存</a><p>録音はこの端末内で処理されます。ページを閉じる前に保存してください。</p></div>
+    </section>
+
+    <details><summary>あそび方・アプリの追加</summary><div class="help"><p>白鍵は A S D F G H J K、黒鍵は W E T Y U。Z / ↓で1オクターブ下、X / ↑で1オクターブ上に移動できます。鍵盤にフォーカスして Space / Enter でも演奏できます。</p><p>「録音する」から「停止」までの演奏をWAVにして保存できます（最長3分）。マイクは使いません。新しい録音を始めると前の録音を置き換えます。</p><p>iPhone / iPadはSafariの共有メニューから「ホーム画面に追加」、Androidはブラウザーの「アプリをインストール」から追加できます。初回読み込み後はオフラインでも演奏できます。</p><p>ファミコンの波形をイメージしたシンセサイザーです。実機の音源を厳密に再現するものではなく、同時発音数も実機とは異なります。ノイズの鍵盤は音程ではなくノイズの速さを変えます。</p></div></details>
+
+</dialog>
+</body>
+</html>
