@@ -5,7 +5,8 @@
 /* Suppress double-tap zoom; keep scrolling and pinch zoom available. */
 /* Apply directly to keys and labels, including Safari's selection/callout behavior. */
 .keyboard .key,
-.keyboard .key * {
+.keyboard .key *,
+#status {
   -webkit-user-select: none;
   user-select: none;
   -webkit-touch-callout: none;
