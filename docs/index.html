@@ -12,6 +12,7 @@
   <title>ポケット・チップ — 8-bit piano</title>
   <script src="./audio.js" defer></script>
   <script src="./app.js" defer></script>
+  <script src="./orientation.js" defer></script>
 </head>
 <body>
 <main class="piano-app">
@@ -36,11 +37,25 @@
 <dialog id="settings" aria-labelledby="settings-title">
   <div class="dialog-heading"><h1 id="settings-title">設定・録音</h1><button id="close-settings" autofocus>閉じる</button></div>
       <div class="controls">
+        <label>鍵盤の表示数（白鍵）<select id="white-count"><option value="1">1鍵</option><option value="2">2鍵</option><option value="3">3鍵</option><option value="4">4鍵</option><option value="5">5鍵</option><option value="6">6鍵</option><option value="7">7鍵</option><option value="8" selected>8鍵</option><option value="9">9鍵</option><option value="10">10鍵</option><option value="11">11鍵</option><option value="12">12鍵</option><option value="13">13鍵</option><option value="14">14鍵</option><option value="15">15鍵</option><option value="16">16鍵</option><option value="17">17鍵</option><option value="18">18鍵</option><option value="19">19鍵</option><option value="20">20鍵</option><option value="21">21鍵</option></select></label>
+        <label>開始音<select id="start-note"><option value="0">ド（C）</option><option value="2">レ（D）</option><option value="4">ミ（E）</option><option value="5">ファ（F）</option><option value="7">ソ（G）</option><option value="9">ラ（A）</option><option value="11">シ（B）</option></select></label>
+        <label>開始音のオクターブ<select id="start-octave"><option value="1">1</option><option value="2">2</option><option value="3">3</option><option value="4" selected>4</option><option value="5">5</option><option value="6">6</option></select></label>
+        <p class="keyboard-help">黒鍵は白鍵の間に自動で配置されます。PC入力はA＝ドの配列で、表示中の音のみ演奏できます。設定は端末に保存されます。</p>
+
+        <div class="orientation-settings">
+          <span>画面の向き</span>
+          <div class="orientation-actions"><button id="landscape" type="button" aria-pressed="false">横画面に固定</button><button id="orientation-auto" type="button" aria-pressed="true">自動回転</button></div>
+          <p id="orientation-status" role="status">端末の向きに合わせます。横画面の固定には全画面表示になる場合があります。</p>
+        </div>
         <label class="tone-label">音色 <select id="tone"><option value="pulse50">パルス 50% · まろやか</option><option value="pulse25">パルス 25% · ゲームの主役</option><option value="pulse12">パルス 12.5% · きらめき</option><option value="triangle">三角波 · やわらかい低音</option><option value="noise">ノイズ · リズムと効果音</option></select></label>
 
         <label class="volume-label">音量 <span><input id="volume" type="range" min="0" max="100" value="65"><output id="volume-value">65%</output></span></label>
       </div>
 
+    <section class="pwa-update" aria-label="アプリの更新">
+      <button id="update-app" type="button">PWAを更新</button>
+      <p id="update-status" role="status">最新版を確認し、更新があれば再読み込みします。残したい録音は先に保存してください。</p>
+    </section>
     <section class="recorder" aria-label="録音">
       <div class="record-info"><span class="eyebrow">YOUR LITTLE SESSION</span><div><span id="record-dot" aria-hidden="true">●</span> <output id="timer">00:00</output><span id="record-label">演奏を残そう</span></div></div>
       <div class="record-actions"><button id="record" class="primary">● 録音する</button><button id="stop" disabled>■ 停止</button></div>

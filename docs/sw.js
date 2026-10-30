@@ -1,5 +1,5 @@
-const CACHE = 'pocket-chip-v3';
-const ASSETS = ['./', './index.html', './style.css', './app.js', './audio.js', './manifest.webmanifest', './icon.svg', './icons/icon-192.png', './icons/icon-512.png'];
+const CACHE = 'pocket-chip-v7';
+const ASSETS = ['./', './index.html', './style.css', './app.js', './audio.js', './orientation.js', './manifest.webmanifest', './icon.svg', './icons/icon-192.png', './icons/icon-512.png'];
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((cache) => cache.addAll(ASSETS)));
 });
@@ -8,6 +8,9 @@ self.addEventListener('activate', (event) => {
     await Promise.all(names.filter((name) => name.startsWith('pocket-chip-') && name !== CACHE).map((name) => caches.delete(name)));
     await self.clients.claim();
   }));
+});
+self.addEventListener('message', (event) => {
+  if (event.data?.type === 'SKIP_WAITING') event.waitUntil(self.skipWaiting());
 });
 self.addEventListener('fetch', (event) => {
   if (event.request.method !== 'GET' || new URL(event.request.url).origin !== self.location.origin) return;

@@ -3,8 +3,10 @@
 const $ = (id) => document.getElementById(id);
 const names = ['ド', 'ド♯', 'レ', 'レ♯', 'ミ', 'ファ', 'ファ♯', 'ソ', 'ソ♯', 'ラ', 'ラ♯', 'シ', 'ド'];
 const codes = ['KeyA', 'KeyW', 'KeyS', 'KeyE', 'KeyD', 'KeyF', 'KeyT', 'KeyG', 'KeyY', 'KeyH', 'KeyU', 'KeyJ', 'KeyK'];
-const whites = [0, 2, 4, 5, 7, 9, 11, 12];
-const blackPositions = { 1: 1, 3: 2, 6: 4, 8: 5, 10: 6 };
+const whiteNotes = [0, 2, 4, 5, 7, 9, 11];
+const noteLetters = ['C', 'C♯', 'D', 'D♯', 'E', 'F', 'F♯', 'G', 'G♯', 'A', 'A♯', 'B'];
+let whiteCount = 8, startNoteClass = 0;
+let keys = [];
 const active = new Map();
 const pending = new Map();
 const pointers = new Map();
@@ -12,31 +14,97 @@ let octave = 4, context, master, recording, timer, recordingUrl;
 let startingRecording = false;
 const status = (message) => { $('status').textContent = message; };
 
-for (const key of document.querySelectorAll('.key')) {
-  const offset = Number(key.dataset.offset);
-  // Synthesized clicks from assistive technology have no pointer/key down event.
-  key.addEventListener('click', (event) => {
-    if (event.detail === 0 && !active.has(`focus:${offset}`) && !pending.has(`focus:${offset}`)) {
-      const id = `accessible:${offset}`;
-      startNote(id, offset);
-      setTimeout(() => endNote(id), 180);
-    }
-  });
+function keyboardLayout(start, count) {
+  const layout = [];
+  let offset = start, whiteIndex = 0;
+  while (whiteIndex < count) {
+    const white = whiteNotes.includes(offset % 12);
+    layout.push({ offset, white, position: whiteIndex });
+    if (white) whiteIndex++;
+    offset++;
+  }
+  return layout;
 }
-const keys = [...document.querySelectorAll('.key')];
+function noteLabel(offset) {
+  return noteLetters[offset % 12] + (octave + Math.floor(offset / 12));
+}
+function saveKeyboard() {
+  try { localStorage.setItem('pocket-chip-keyboard', JSON.stringify({ whiteCount, startNoteClass, octave })); } catch { /* Storage is optional. */ }
+}
+function renderKeyboard() {
+  allOff();
+  const fragment = document.createDocumentFragment();
+  for (const { offset, white, position } of keyboardLayout(startNoteClass, whiteCount)) {
+    const key = document.createElement('button');
+    key.type = 'button';
+    key.className = 'key ' + (white ? 'white' : 'black');
+    key.dataset.offset = offset;
+    key.style.setProperty('--position', position);
+    key.setAttribute('aria-pressed', 'false');
+    const name = document.createElement('span');
+    name.textContent = names[offset % 12];
+    const shortcut = document.createElement('small');
+    shortcut.textContent = codes[offset]?.slice(3) || noteLabel(offset);
+    key.append(name, shortcut);
+    key.addEventListener('click', (event) => {
+      if (event.detail === 0 && !active.has('focus:' + offset) && !pending.has('focus:' + offset)) {
+        const id = 'accessible:' + offset;
+        startNote(id, offset);
+        setTimeout(() => endNote(id), 180);
+      }
+    });
+    fragment.append(key);
+  }
+  $('keyboard').replaceChildren(fragment);
+  $('keyboard').style.setProperty('--white-count', whiteCount);
+  keys = [...$('keyboard').querySelectorAll('.key')];
+  labels();
+}
 function labels() {
-  $('octave').value = `C${octave}–C${octave + 1}`;
+  const layout = keyboardLayout(startNoteClass, whiteCount);
+  $('octave').value = noteLabel(startNoteClass) + '–' + noteLabel(layout.at(-1).offset);
   $('octave-down').disabled = octave <= 1;
   $('octave-up').disabled = octave >= 6;
-  keys.forEach((key, i) => key.setAttribute('aria-label', `${names[i]}、オクターブ${octave + (i === 12 ? 1 : 0)}、${codes[i].slice(3)}キー`));
+  $('start-octave').value = octave;
+  keys.forEach((key) => {
+    const offset = Number(key.dataset.offset);
+    key.setAttribute('aria-label', names[offset % 12] + '、' + noteLabel(offset) + (codes[offset] ? '、' + codes[offset].slice(3) + 'キー' : ''));
+    key.querySelector('small').textContent = codes[offset]?.slice(3) || noteLabel(offset);
+  });
 }
+try {
+  const saved = JSON.parse(localStorage.getItem('pocket-chip-keyboard'));
+  if (saved && Number.isInteger(saved.whiteCount) && saved.whiteCount >= 1 && saved.whiteCount <= 21) whiteCount = saved.whiteCount;
+  if (saved && whiteNotes.includes(saved.startNoteClass)) startNoteClass = saved.startNoteClass;
+  if (saved && Number.isInteger(saved.octave) && saved.octave >= 1 && saved.octave <= 6) octave = saved.octave;
+} catch { /* Use defaults for unavailable or invalid storage. */ }
+$('white-count').value = whiteCount;
+$('start-note').value = startNoteClass;
+$('white-count').onchange = () => {
+  const value = Number($('white-count').value);
+  if (!Number.isInteger(value) || value < 1 || value > 21) return;
+  whiteCount = value;
+  renderKeyboard(); saveKeyboard();
+};
+$('start-note').onchange = () => {
+  const value = Number($('start-note').value);
+  if (!whiteNotes.includes(value)) return;
+  startNoteClass = value;
+  renderKeyboard(); saveKeyboard();
+};
+$('start-octave').onchange = () => {
+  const value = Number($('start-octave').value);
+  if (!Number.isInteger(value) || value < 1 || value > 6) return;
+  shiftOctave(value - octave);
+};
 function paint() {
-  keys.forEach((key, offset) => {
+  keys.forEach((key) => {
+    const offset = Number(key.dataset.offset);
     const pressed = [...active.values()].some((voice) => voice.offset === offset);
     key.classList.toggle('active', pressed);
     key.setAttribute('aria-pressed', String(pressed));
   });
-  $('note-display').textContent = active.size ? [...new Set([...active.values()].map((v) => names[v.offset]))].join(' · ') : 'READY TO PLAY';
+  $('note-display').textContent = active.size ? [...new Set([...active.values()].map((v) => names[v.offset % 12]))].join(' · ') : 'READY TO PLAY';
 }
 async function audioReady() {
   if (!context) {
@@ -50,7 +118,7 @@ async function audioReady() {
   if (context.state !== 'running') await context.resume();
 }
 async function startNote(id, offset) {
-  if (pending.has(id) || active.has(id)) return;
+  if (!keys.some(key => Number(key.dataset.offset) === offset) || pending.has(id) || active.has(id)) return;
   const token = {};
   pending.set(id, token);
   const midi = (octave + 1) * 12 + offset;
@@ -89,6 +157,7 @@ function shiftOctave(delta) {
   allOff();
   octave = Math.max(1, Math.min(6, octave + delta));
   labels();
+  saveKeyboard();
 }
 $('octave-down').onclick = () => shiftOctave(-1);
 $('octave-up').onclick = () => shiftOctave(1);
@@ -235,7 +304,67 @@ async function finishRecording() {
 }
 $('stop').onclick = finishRecording;
 $('quick-stop').onclick = finishRecording;
-labels();
+renderKeyboard();
 if ('serviceWorker' in navigator && ['http:', 'https:'].includes(location.protocol)) {
-  navigator.serviceWorker.register('./sw.js').catch(() => status('オフライン準備に失敗しました。オンラインでは演奏できます。'));
+  navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' }).catch(() => status('オフライン準備に失敗しました。オンラインでは演奏できます。'));
 }
+
+function waitForWorker(worker, states) {
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => finish(new Error('更新がタイムアウトしました。もう一度お試しください。')), 30000);
+    function finish(error) {
+      clearTimeout(timeout);
+      worker.removeEventListener('statechange', check);
+      if (error) reject(error); else resolve();
+    }
+    function check() {
+      if (states.includes(worker.state)) finish();
+      else if (worker.state === 'redundant') finish(new Error('更新ファイルを準備できませんでした。通信状態を確認して再度お試しください。'));
+    }
+    worker.addEventListener('statechange', check);
+    check();
+  });
+}
+$('update-app').onclick = async () => {
+  const button = $('update-app');
+  const report = (text) => { $('update-status').textContent = text; };
+  if (button.disabled) return;
+  if (recording || startingRecording || $('record').disabled) {
+    report('録音・WAV作成が終わってから更新してください。');
+    return;
+  }
+  if (!('serviceWorker' in navigator) || !['http:', 'https:'].includes(location.protocol)) {
+    report('PWAの更新は、公開されたHTTPSのアプリで利用できます。');
+    return;
+  }
+  button.disabled = true;
+  $('record').disabled = true;
+  try {
+    report('最新版を確認しています…');
+    const registration = await navigator.serviceWorker.getRegistration();
+    if (!registration) throw new Error('PWAの準備が完了していません。オンラインでページを開き直してください。');
+    await registration.update();
+    if (registration.installing) {
+      report('更新ファイルを準備しています…');
+      await waitForWorker(registration.installing, ['installed', 'activated']);
+    }
+    const worker = registration.waiting;
+    if (!worker) {
+      report('現在のアプリは最新版です。');
+      return;
+    }
+    if (recordingUrl && !window.confirm('更新すると現在の録音は消えます。必要な録音はWAVで保存してください。更新しますか？')) {
+      report('更新を中止しました。録音を保存してから、もう一度更新できます。');
+      return;
+    }
+    allOff();
+    report('更新を適用しています…');
+    const activated = waitForWorker(worker, ['activated']);
+    worker.postMessage({ type: 'SKIP_WAITING' });
+    await activated;
+    // Activation completes after cache cleanup and clients.claim().
+    location.reload();
+  } catch (error) {
+    report(`更新できませんでした。${error.message}`);
+  } finally { button.disabled = false; $('record').disabled = false; }
+};
